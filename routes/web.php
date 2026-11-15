@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\GenreController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReviewLikeController;
@@ -61,13 +62,16 @@ Route::middleware('auth')->group(function (): void {
 });
 
 /*
-|--------------------------------------------------------------------------
-| 次フェーズで実装予定のルート（プレースホルダ）
-|--------------------------------------------------------------------------
-|
-| layouts/navigation が route('genres.index') でURLを生成するため、
-| ルート定義が無いと RouteNotFoundException となる。
-| ジャンル管理フェーズでコントローラーに差し替える。
-|
-*/
-Route::get('/genres', fn () => abort(404))->name('genres.index');
+ * ジャンル管理（PG05〜PG08）— 全ルート認証必須。
+ * 確定仕様により、ログインユーザーであれば誰でも全操作が可能（Policy なし）。
+ * '/genres/create' は '/genres/{genre}' より先に定義する必要がある。
+ */
+Route::middleware('auth')->group(function (): void {
+    Route::get('/genres', [GenreController::class, 'index'])->name('genres.index');
+    Route::get('/genres/create', [GenreController::class, 'create'])->name('genres.create');
+    Route::post('/genres', [GenreController::class, 'store'])->name('genres.store');
+    Route::get('/genres/{genre}', [GenreController::class, 'show'])->name('genres.show');
+    Route::get('/genres/{genre}/edit', [GenreController::class, 'edit'])->name('genres.edit');
+    Route::put('/genres/{genre}', [GenreController::class, 'update'])->name('genres.update');
+    Route::delete('/genres/{genre}', [GenreController::class, 'destroy'])->name('genres.destroy');
+});
