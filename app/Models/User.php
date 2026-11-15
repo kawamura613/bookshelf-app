@@ -64,27 +64,6 @@ class User extends Authenticatable
     /**
      * ユーザーがお気に入り登録した書籍。
      */
-    public function favorites(): BelongsToMany
-    {
-        return $this->belongsToMany(Book::class, 'favorites', 'user_id', 'book_id')
-            ->withTimestamps();
-    }
-
-    /**
-     * ユーザーがいいねしたレビュー。
-     */
-    public function reviewLikes(): BelongsToMany
-    {
-        return $this->belongsToMany(Review::class, 'review_likes', 'user_id', 'review_id')
-            ->withTimestamps();
-    }
-
-    /**
-     * ユーザーがお気に入り登録した書籍。
-     *
-     * 提供済み Blade（books/show, favorites/index）が参照する名称。
-     * favorites() と同一のリレーションを指す。
-     */
     public function favoriteBooks(): BelongsToMany
     {
         return $this->belongsToMany(Book::class, 'favorites', 'user_id', 'book_id')
@@ -93,9 +72,6 @@ class User extends Authenticatable
 
     /**
      * ユーザーがいいねしたレビュー。
-     *
-     * 提供済み Blade（books/show）が参照する名称。
-     * reviewLikes() と同一のリレーションを指す。
      */
     public function likedReviews(): BelongsToMany
     {

@@ -51,18 +51,6 @@ class Review extends Model
     /**
      * レビューにいいねしたユーザー。
      */
-    public function likedBy(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'review_likes', 'review_id', 'user_id')
-            ->withTimestamps();
-    }
-
-    /**
-     * レビューにいいねしたユーザー。
-     *
-     * 提供済み Blade（books/show）が参照する名称。
-     * likedBy() と同一のリレーションを指す。
-     */
     public function likedByUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'review_likes', 'review_id', 'user_id')

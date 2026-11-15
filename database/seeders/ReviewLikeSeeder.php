@@ -51,7 +51,7 @@ class ReviewLikeSeeder extends Seeder
                 $likerIds[] = $candidate->id;
             }
 
-            $review->likedBy()->syncWithoutDetaching($likerIds);
+            $review->likedByUsers()->syncWithoutDetaching($likerIds);
         }
     }
 }
