@@ -51,7 +51,7 @@ class Review extends Model
     /**
      * レビューにいいねしたユーザー。
      */
-    public function likedBy(): BelongsToMany
+    public function likedByUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'review_likes', 'review_id', 'user_id')
             ->withTimestamps();

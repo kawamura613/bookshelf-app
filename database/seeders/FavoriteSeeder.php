@@ -61,7 +61,7 @@ class FavoriteSeeder extends Seeder
                 continue;
             }
 
-            $user->favorites()->syncWithoutDetaching(
+            $user->favoriteBooks()->syncWithoutDetaching(
                 collect($isbnList)->map(fn (string $isbn): int => $bookIds[$isbn])->all()
             );
         }
