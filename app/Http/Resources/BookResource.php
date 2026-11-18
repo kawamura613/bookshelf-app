@@ -11,6 +11,8 @@ class BookResource extends JsonResource
      * Transform the resource into an array.
      *
      * genres / reviews はロードされている場合のみ含める。
+     * published_date は date キャスト済みのため、API の確定仕様である
+     * Y-m-d 形式へ明示的に整形して返す（未登録の場合は null）。
      * average_rating は withAvg('reviews', 'rating')、
      * reviews_count は withCount('reviews') の集計値を利用する。
      *
@@ -24,7 +26,7 @@ class BookResource extends JsonResource
             'title' => $this->title,
             'author' => $this->author,
             'isbn' => $this->isbn,
-            'published_date' => $this->published_date,
+            'published_date' => $this->published_date?->format('Y-m-d'),
             'description' => $this->description,
             'image_url' => $this->image_url,
             'genres' => GenreResource::collection($this->whenLoaded('genres')),

@@ -19,7 +19,9 @@ class UpdateBookRequest extends FormRequest
     /**
      * バリデーションルール。
      *
-     * isbn の一意制約は更新対象のレコード自身を除外する。
+     * isbn と published_date は任意項目。isbn が入力された場合のみ
+     * 13桁の数字であることを検証し、一意制約は更新対象のレコード
+     * 自身を除外する。
      *
      * @return array<string, array<int, mixed>>
      */
@@ -32,11 +34,11 @@ class UpdateBookRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => [
-                'required',
+                'nullable',
                 'digits:13',
                 Rule::unique('books', 'isbn')->ignore($book),
             ],
-            'published_date' => ['required', 'date'],
+            'published_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'genres' => ['required', 'array', 'min:1'],
@@ -58,10 +60,8 @@ class UpdateBookRequest extends FormRequest
             'author.required' => '著者を入力してください。',
             'author.string' => '著者は文字列で入力してください。',
             'author.max' => '著者は255文字以内で入力してください。',
-            'isbn.required' => 'ISBNを入力してください。',
             'isbn.digits' => 'ISBNは13桁の数字で入力してください。',
             'isbn.unique' => 'このISBNは既に登録されています。',
-            'published_date.required' => '出版日を入力してください。',
             'published_date.date' => '出版日は有効な日付を入力してください。',
             'description.string' => '説明は文字列で入力してください。',
             'image_url.url' => '画像URLは有効なURL形式で入力してください。',

@@ -308,4 +308,81 @@ class BookCrudTest extends TestCase
         $this->actingAs($other)->get(route('books.show', $book))
             ->assertDontSee(route('books.edit', $book));
     }
+
+    // ---------- isbn / published_date の任意項目化 ----------
+
+    public function test_isbn_と_published_date_を省略して登録できる(): void
+    {
+        $payload = $this->validPayload();
+        unset($payload['isbn'], $payload['published_date']);
+
+        $this->actingAs($this->user)
+            ->post(route('books.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'テスト書籍',
+            'isbn' => null,
+            'published_date' => null,
+        ]);
+    }
+
+    public function test_isbn_と_published_date_が空文字でも登録できる(): void
+    {
+        $this->actingAs($this->user)
+            ->post(route('books.store'), $this->validPayload([
+                'isbn' => '',
+                'published_date' => '',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'テスト書籍',
+            'isbn' => null,
+            'published_date' => null,
+        ]);
+    }
+
+    public function test_isbn_を入力した場合は13桁チェックが効く(): void
+    {
+        $this->actingAs($this->user)
+            ->post(route('books.store'), $this->validPayload(['isbn' => '123']))
+            ->assertSessionHasErrors(['isbn' => 'ISBNは13桁の数字で入力してください。']);
+    }
+
+    public function test_isbn_が未登録の書籍が複数あっても一意制約に違反しない(): void
+    {
+        Book::factory()->create(['isbn' => null]);
+        $payload = $this->validPayload();
+        unset($payload['isbn']);
+
+        $this->actingAs($this->user)
+            ->post(route('books.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(2, Book::whereNull('isbn')->count());
+    }
+
+    public function test_更新で_isbn_と_published_date_を未登録に戻せる(): void
+    {
+        $book = Book::factory()->create([
+            'user_id' => $this->user->id,
+            'isbn' => '9781234567897',
+            'published_date' => '2026-11-15',
+        ]);
+        $book->genres()->attach($this->genre->id);
+
+        $this->actingAs($this->user)
+            ->put(route('books.update', $book), $this->validPayload([
+                'isbn' => '',
+                'published_date' => '',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'isbn' => null,
+            'published_date' => null,
+        ]);
+    }
 }

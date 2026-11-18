@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreBookRequest extends FormRequest
 {
     /**
-     * 公開APIのため認証は不要。
+     * 認可はルートの auth:sanctum ミドルウェアで担保する。
      */
     public function authorize(): bool
     {
@@ -17,14 +17,13 @@ class StoreBookRequest extends FormRequest
     /**
      * 書籍作成（AP03）のルール。
      *
-     * 基本機能では登録者を user_id としてリクエストボディから受け取る確定仕様。
+     * 登録者はリクエストボディではなく、Sanctum で認証されたユーザーを用いる。
      *
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => ['required', 'digits:13', 'unique:books,isbn'],
@@ -44,9 +43,6 @@ class StoreBookRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.required' => 'ユーザーIDを指定してください。',
-            'user_id.integer' => 'ユーザーIDは整数で指定してください。',
-            'user_id.exists' => '指定されたユーザーは存在しません。',
             'title.required' => 'タイトルを入力してください。',
             'title.string' => 'タイトルは文字列で入力してください。',
             'title.max' => 'タイトルは255文字以内で入力してください。',

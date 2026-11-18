@@ -9,10 +9,12 @@ class Kernel extends ConsoleKernel
 {
     /**
      * Define the application's command schedule.
+     *
+     * 読書計画の失効処理とリマインダー通知を毎日20時に実行する。
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('reading-plans:run-daily')->daily()->at('20:00');
     }
 
     /**

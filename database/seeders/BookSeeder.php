@@ -11,12 +11,15 @@ class BookSeeder extends Seeder
 {
     /**
      * 書籍データを11件投入し、ジャンルを紐付ける。
+     *
+     * 登録者は全ユーザーからランダムに選び、
+     * 書籍の所有者が分散したデータを再現する。
      */
     public function run(): void
     {
-        $user = User::first();
+        $users = User::all();
 
-        if ($user === null) {
+        if ($users->isEmpty()) {
             return;
         }
 
@@ -117,7 +120,7 @@ class BookSeeder extends Seeder
             $created = Book::firstOrCreate(
                 ['isbn' => $book['isbn']],
                 [
-                    'user_id' => $user->id,
+                    'user_id' => $users->random()->id,
                     'title' => $book['title'],
                     'author' => $book['author'],
                     'published_date' => $book['published_date'],

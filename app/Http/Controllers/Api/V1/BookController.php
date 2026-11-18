@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class BookController extends Controller
 {
@@ -68,13 +69,15 @@ class BookController extends Controller
 
     /**
      * 書籍作成（AP03）。201 Created を返す。
+     *
+     * 認証（auth:sanctum）が必須で、作成者は常にトークンの所有者となる。
      */
     public function store(StoreBookRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
         $book = Book::create([
-            'user_id' => $validated['user_id'],
+            'user_id' => Auth::id(),
             'title' => $validated['title'],
             'author' => $validated['author'],
             'isbn' => $validated['isbn'],
@@ -96,13 +99,17 @@ class BookController extends Controller
 
     /**
      * 書籍更新（AP04）。200 OK を返す。
+     *
+     * 認証（auth:sanctum）が必須で、BookPolicy により作成者本人のみ許可する。
+     * 作成者（user_id）は更新対象にしない。
      */
     public function update(UpdateBookRequest $request, Book $book): BookResource
     {
+        $this->authorize('update', $book);
+
         $validated = $request->validated();
 
         $book->update([
-            'user_id' => $validated['user_id'],
             'title' => $validated['title'],
             'author' => $validated['author'],
             'isbn' => $validated['isbn'],
@@ -123,11 +130,14 @@ class BookController extends Controller
     /**
      * 書籍削除（AP05）。204 No Content を返す。
      *
+     * 認証（auth:sanctum）が必須で、BookPolicy により作成者本人のみ許可する。
      * 関連データ（book_genre / reviews / favorites / review_likes）は
      * 外部キーの ON DELETE CASCADE により削除される。
      */
     public function destroy(Book $book): Response
     {
+        $this->authorize('delete', $book);
+
         $book->delete();
 
         return response()->noContent();

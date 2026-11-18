@@ -25,6 +25,11 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+    'google_books' => [
+        // 任意設定。設定されている場合のみ Google Books API に key を付与する。
+        'key' => env('GOOGLE_BOOKS_API_KEY'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

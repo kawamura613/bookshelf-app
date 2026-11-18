@@ -3,7 +3,10 @@
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\GenreController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RankingController;
+use App\Http\Controllers\ReadingPlanController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReviewLikeController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +35,14 @@ Route::get('/ranking', [RankingController::class, 'index'])->name('ranking.index
  * '/books/create' は '/books/{book}' より先に定義する必要がある。
  */
 Route::middleware('auth')->group(function (): void {
+    /*
+     * ISBN検索（Google Books API 連携）。
+     * 登録・編集フォームの JavaScript から呼ばれる JSON エンドポイント。
+     * APIキーのクォータを保護するため認証必須とする。
+     * '/books/{book}' は1セグメントのみに一致するため衝突しない。
+     */
+    Route::get('/books/isbn/{isbn}', [BookController::class, 'searchByIsbn'])->name('books.isbn');
+
     Route::get('/books/create', [BookController::class, 'create'])->name('books.create');
     Route::post('/books', [BookController::class, 'store'])->name('books.store');
     Route::get('/books/{book}/edit', [BookController::class, 'edit'])->name('books.edit');
@@ -74,4 +85,34 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/genres/{genre}/edit', [GenreController::class, 'edit'])->name('genres.edit');
     Route::put('/genres/{genre}', [GenreController::class, 'update'])->name('genres.update');
     Route::delete('/genres/{genre}', [GenreController::class, 'destroy'])->name('genres.destroy');
+});
+
+/*
+ * マイ読書レポート（PG12）— 認証必須。
+ */
+Route::middleware('auth')->group(function (): void {
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+});
+
+/*
+ * 読書計画（PG13）— 全ルート認証必須。
+ * 編集・更新・完了・削除は ReadingPlanPolicy で所有者本人に制限する。
+ * '/reading-plans/create' は '/reading-plans/{plan}' 形式より先に定義する。
+ */
+Route::middleware('auth')->group(function (): void {
+    Route::get('/reading-plans', [ReadingPlanController::class, 'index'])->name('reading-plans.index');
+    Route::get('/reading-plans/create', [ReadingPlanController::class, 'create'])->name('reading-plans.create');
+    Route::post('/reading-plans', [ReadingPlanController::class, 'store'])->name('reading-plans.store');
+    Route::get('/reading-plans/{plan}/edit', [ReadingPlanController::class, 'edit'])->name('reading-plans.edit');
+    Route::put('/reading-plans/{plan}', [ReadingPlanController::class, 'update'])->name('reading-plans.update');
+    Route::post('/reading-plans/{plan}/complete', [ReadingPlanController::class, 'complete'])->name('reading-plans.complete');
+    Route::delete('/reading-plans/{plan}', [ReadingPlanController::class, 'destroy'])->name('reading-plans.destroy');
+});
+
+/*
+ * 通知（PG14）— 認証必須。他ユーザーの通知は 404 となる。
+ */
+Route::middleware('auth')->group(function (): void {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 });

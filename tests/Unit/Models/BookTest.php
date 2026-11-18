@@ -4,12 +4,14 @@ namespace Tests\Unit\Models;
 
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\ReadingPlan;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class BookTest extends TestCase
@@ -52,12 +54,20 @@ class BookTest extends TestCase
         ], (new Book)->getFillable());
     }
 
-    public function test_published_date_はキャストされず文字列で取得できる(): void
+    public function test_published_date_は_date_にキャストされる(): void
     {
         $book = Book::factory()->create(['published_date' => '2026-11-16']);
 
-        $this->assertSame('2026-11-16', $book->fresh()->published_date);
-        $this->assertArrayNotHasKey('published_date', (new Book)->getCasts());
+        $this->assertSame('date', (new Book)->getCasts()['published_date']);
+        $this->assertInstanceOf(Carbon::class, $book->fresh()->published_date);
+        $this->assertSame('2026-11-16', $book->fresh()->published_date->format('Y-m-d'));
+    }
+
+    public function test_published_date_が_null_の場合はそのまま_null_になる(): void
+    {
+        $book = Book::factory()->create(['published_date' => null]);
+
+        $this->assertNull($book->fresh()->published_date);
     }
 
     public function test_登録者を取得できる(): void
@@ -116,5 +126,41 @@ class BookTest extends TestCase
         $this->assertDatabaseCount('reviews', 0);
         $this->assertDatabaseCount('favorites', 0);
         $this->assertDatabaseCount('review_likes', 0);
+    }
+
+    public function test_お気に入り登録したユーザーを取得できる(): void
+    {
+        $book = Book::factory()->create();
+        $user = User::factory()->create(['name' => 'お気に入り登録者']);
+        $other = User::factory()->create();
+
+        $user->favoriteBooks()->attach($book->id);
+
+        $this->assertSame(['お気に入り登録者'], $book->favoritedBy->pluck('name')->all());
+        $this->assertFalse($book->favoritedBy->contains($other->id));
+    }
+
+    public function test_reading_plans_リレーションは_hasmany_を返す(): void
+    {
+        $this->assertInstanceOf(HasMany::class, (new Book)->readingPlans());
+    }
+
+    public function test_書籍に紐づく読書計画を取得できる(): void
+    {
+        $book = Book::factory()->create();
+        $plan = ReadingPlan::factory()->create(['book_id' => $book->id]);
+        ReadingPlan::factory()->create();
+
+        $this->assertSame([$plan->id], $book->readingPlans->pluck('id')->all());
+    }
+
+    public function test_書籍を削除すると読書計画も削除される(): void
+    {
+        $book = Book::factory()->create();
+        ReadingPlan::factory()->create(['book_id' => $book->id]);
+
+        $book->delete();
+
+        $this->assertDatabaseCount('reading_plans', 0);
     }
 }

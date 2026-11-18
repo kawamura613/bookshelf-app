@@ -20,6 +20,9 @@ class StoreBookRequest extends FormRequest
      * 提供済み Blade（books/_form.blade.php）の name 属性
      * title / author / isbn / published_date / description / image_url / genres[] に対応する。
      *
+     * isbn と published_date は任意項目。isbn が入力された場合のみ
+     * 13桁の数字かつ未登録であることを検証する。
+     *
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
@@ -27,8 +30,8 @@ class StoreBookRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
-            'isbn' => ['required', 'digits:13', 'unique:books,isbn'],
-            'published_date' => ['required', 'date'],
+            'isbn' => ['nullable', 'digits:13', 'unique:books,isbn'],
+            'published_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'genres' => ['required', 'array', 'min:1'],
@@ -50,10 +53,8 @@ class StoreBookRequest extends FormRequest
             'author.required' => '著者を入力してください。',
             'author.string' => '著者は文字列で入力してください。',
             'author.max' => '著者は255文字以内で入力してください。',
-            'isbn.required' => 'ISBNを入力してください。',
             'isbn.digits' => 'ISBNは13桁の数字で入力してください。',
             'isbn.unique' => 'このISBNは既に登録されています。',
-            'published_date.required' => '出版日を入力してください。',
             'published_date.date' => '出版日は有効な日付を入力してください。',
             'description.string' => '説明は文字列で入力してください。',
             'image_url.url' => '画像URLは有効なURL形式で入力してください。',

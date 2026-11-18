@@ -28,6 +28,15 @@ class Book extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'published_date' => 'date',
+    ];
+
+    /**
      * 書籍を登録したユーザー。
      */
     public function user(): BelongsTo
@@ -58,5 +67,13 @@ class Book extends Model
     {
         return $this->belongsToMany(User::class, 'favorites', 'book_id', 'user_id')
             ->withTimestamps();
+    }
+
+    /**
+     * 書籍に対して作成された読書計画。
+     */
+    public function readingPlans(): HasMany
+    {
+        return $this->hasMany(ReadingPlan::class);
     }
 }

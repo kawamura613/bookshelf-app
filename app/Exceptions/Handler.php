@@ -7,6 +7,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -32,17 +33,24 @@ class Handler extends ExceptionHandler
             //
         });
 
-        // api/* でモデルが見つからない場合は確定仕様のJSONを返す。
-        $this->renderable(function (ModelNotFoundException $e, Request $request): ?JsonResponse {
-            return $request->is('api/*') ? $this->modelNotFoundResponse() : null;
-        });
-
-        // ルートモデルバインディング失敗時は ModelNotFoundException が
-        // NotFoundHttpException に変換されるため、元の例外を見て判定する。
+        /*
+         * api/* ではモデル未検出と認可失敗を確定仕様のJSONで返す。
+         *
+         * ModelNotFoundException と AuthorizationException は
+         * prepareException() により renderable のコールバックが呼ばれる前に
+         * NotFoundHttpException / AccessDeniedHttpException へ変換されるため、
+         * 変換後の例外を受け取る。モデル未検出はルートモデルバインディング
+         * 失敗と区別できないため、元の例外を見て判定する。
+         */
         $this->renderable(function (NotFoundHttpException $e, Request $request): ?JsonResponse {
             return $request->is('api/*') && $e->getPrevious() instanceof ModelNotFoundException
                 ? $this->modelNotFoundResponse()
                 : null;
+        });
+
+        // 認可失敗（AP06）。
+        $this->renderable(function (AccessDeniedHttpException $e, Request $request): ?JsonResponse {
+            return $request->is('api/*') ? $this->forbiddenResponse() : null;
         });
     }
 
@@ -50,10 +58,25 @@ class Handler extends ExceptionHandler
      * api/* へのリクエストは Accept ヘッダーが無くても常にJSONで応答する。
      *
      * これによりバリデーションエラーが 422 のJSONで返る。
+     * $request は親クラスが型宣言なしで定義しているため、PHPDocで型を示す
+     * （引数の型を狭めるとシグネチャ非互換になる）。
+     *
+     * @param  Request  $request
      */
     protected function shouldReturnJson($request, Throwable $e): bool
     {
         return $request->is('api/*') || parent::shouldReturnJson($request, $e);
+    }
+
+    /**
+     * 認可失敗時の共通レスポンス。
+     */
+    private function forbiddenResponse(): JsonResponse
+    {
+        return response()->json(
+            ['error' => 'この操作を実行する権限がありません。'],
+            Response::HTTP_FORBIDDEN
+        );
     }
 
     /**

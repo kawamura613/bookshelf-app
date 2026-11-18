@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 class UpdateBookRequest extends FormRequest
 {
     /**
-     * 公開APIのため認証は不要。
+     * 認可はルートの auth:sanctum ミドルウェアと BookPolicy で担保する。
      */
     public function authorize(): bool
     {
@@ -19,13 +19,13 @@ class UpdateBookRequest extends FormRequest
      * 書籍更新（AP04）のルール。
      *
      * isbn の一意性チェックは更新対象のレコード自身を除外する。
+     * 登録者（user_id）は更新対象にしない。
      *
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => [
@@ -49,9 +49,6 @@ class UpdateBookRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.required' => 'ユーザーIDを指定してください。',
-            'user_id.integer' => 'ユーザーIDは整数で指定してください。',
-            'user_id.exists' => '指定されたユーザーは存在しません。',
             'title.required' => 'タイトルを入力してください。',
             'title.string' => 'タイトルは文字列で入力してください。',
             'title.max' => 'タイトルは255文字以内で入力してください。',
